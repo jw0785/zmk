@@ -82,6 +82,7 @@ config ZMK_USB
 	select USB
 	select USB_DEVICE_STACK
 	select USB_DEVICE_HID
+	select ENABLE_HID_INT_OUT_EP
 
 if ZMK_USB
 
