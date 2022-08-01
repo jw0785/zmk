@@ -238,6 +238,17 @@ static int zmk_led_generate_status() {
   16 13 10  7  4  1
 
   17
+
+  MoErgo 40 LEDs
+
+  34 28 22 16 10
+  35 29 23 17 11 6
+  36 30 24 18 12 7
+  37 31 25 19 13 8
+  38 32 26 20 14 9
+  39 33 27 21 15
+                0 1 2
+                3 4 5
 */
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     zmk_leds_flags_t led_flags = zmk_leds_get_current_flags();
