@@ -55,7 +55,7 @@ struct rgb_underglow_state {
 static const struct device *led_strip;
 
 static struct led_rgb pixels[STRIP_NUM_PIXELS];
-static struct led_rgb pixels[STRIP_NUM_PIXELS];
+static struct led_rgb status_pixels[STRIP_NUM_PIXELS];
 
 static struct rgb_underglow_state state;
 
@@ -168,15 +168,58 @@ static void zmk_rgb_underglow_effect_swirl() {
     state.animation_step = state.animation_step % HUE_MAX;
 }
 
+static int zmk_led_generate_status();
+
 static void zmk_led_write_pixels() {
     static struct led_rgb led_buffer[STRIP_NUM_PIXELS];
-    if (!state.status_active) {
+    int bat0 = zmk_battery_state_of_charge();
+    int blend = 0;
+    if (state.status_active) {
+        blend = zmk_led_generate_status();
+    }
+
+    // fast path: no status indicators, battery level OK
+    if (blend == 0 && bat0 >= 20) {
         led_strip_update_rgb(led_strip, pixels, STRIP_NUM_PIXELS);
         return;
     }
 
+    if (blend == 0) {
+        for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
+            led_buffer[i] = pixels[i];
+        }
+    } else if (blend >= 256) {
+        for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
+            led_buffer[i] = status_pixels[i];
+        }
+    } else if (blend < 256) {
+        uint16_t blend_l = blend;
+        uint16_t blend_r = 256 - blend;
+        for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
+            led_buffer[i].r =
+                ((status_pixels[i].r * blend_l) >> 8) + ((pixels[i].r * blend_r) >> 8);
+            led_buffer[i].g =
+                ((status_pixels[i].g * blend_l) >> 8) + ((pixels[i].g * blend_r) >> 8);
+            led_buffer[i].b =
+                ((status_pixels[i].b * blend_l) >> 8) + ((pixels[i].b * blend_r) >> 8);
+        }
+    }
+
+    // battery below 20%, reduce LED brightness
+    if (bat0 < 20) {
+        for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
+            led_buffer[i].r = led_buffer[i].r >> 1;
+            led_buffer[i].g = led_buffer[i].g >> 1;
+            led_buffer[i].b = led_buffer[i].b >> 2;
+        }
+    }
+
+    led_strip_update_rgb(led_strip, led_buffer, STRIP_NUM_PIXELS);
+}
+
+static int zmk_led_generate_status() {
     for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-        led_buffer[i] = (struct led_rgb){r : 0, g : 0, b : 0};
+        status_pixels[i] = (struct led_rgb){r : 0, g : 0, b : 0};
     }
 
     const struct led_rgb red = {r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX, g : 0, b : 0};
@@ -200,16 +243,16 @@ static void zmk_led_write_pixels() {
     zmk_leds_flags_t led_flags = zmk_leds_get_current_flags();
 
     if (led_flags & ZMK_LED_CAPSLOCK_BIT)
-        led_buffer[8] = green;
+        status_pixels[8] = green;
     if (led_flags & ZMK_LED_NUMLOCK_BIT)
-        led_buffer[5] = green;
+        status_pixels[5] = green;
     if (led_flags & ZMK_LED_SCROLLLOCK_BIT)
-        led_buffer[2] = green;
+        status_pixels[2] = green;
 
     if (zmk_ble_active_profile_is_open())
-        led_buffer[14] = yellow;
+        status_pixels[14] = yellow;
     else if (zmk_ble_active_profile_is_connected())
-        led_buffer[14] = green;
+        status_pixels[14] = green;
 #endif
 
     int bat0 = zmk_battery_state_of_charge();
@@ -220,17 +263,17 @@ static void zmk_led_write_pixels() {
         bat0_colour = green;
 
     if (bat0 >= 0)
-        led_buffer[15] = bat0_colour;
+        status_pixels[15] = bat0_colour;
     if (bat0 >= 20)
-        led_buffer[12] = bat0_colour;
+        status_pixels[12] = bat0_colour;
     if (bat0 >= 40)
-        led_buffer[9] = bat0_colour;
+        status_pixels[9] = bat0_colour;
     if (bat0 >= 60)
-        led_buffer[6] = bat0_colour;
+        status_pixels[6] = bat0_colour;
     if (bat0 >= 80)
-        led_buffer[3] = bat0_colour;
+        status_pixels[3] = bat0_colour;
     if (bat0 >= 100)
-        led_buffer[0] = bat0_colour;
+        status_pixels[0] = bat0_colour;
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     int bat1 = zmk_battery_state_of_peripheral_charge();
@@ -241,17 +284,17 @@ static void zmk_led_write_pixels() {
         bat1_colour = green;
 
     if (bat1 >= 0)
-        led_buffer[16] = bat1_colour;
+        status_pixels[16] = bat1_colour;
     if (bat1 >= 20)
-        led_buffer[13] = bat1_colour;
+        status_pixels[13] = bat1_colour;
     if (bat1 >= 40)
-        led_buffer[10] = bat1_colour;
+        status_pixels[10] = bat1_colour;
     if (bat1 >= 60)
-        led_buffer[7] = bat1_colour;
+        status_pixels[7] = bat1_colour;
     if (bat1 >= 80)
-        led_buffer[4] = bat1_colour;
+        status_pixels[4] = bat1_colour;
     if (bat1 >= 100)
-        led_buffer[1] = bat1_colour;
+        status_pixels[1] = bat1_colour;
 #endif
 
     int16_t blend = 256;
@@ -265,17 +308,7 @@ static void zmk_led_write_pixels() {
     if (blend > 256)
         blend = 256;
 
-    if (blend < 256) {
-        uint16_t blend_l = blend;
-        uint16_t blend_r = 256 - blend;
-        for (int i = 0; i < STRIP_NUM_PIXELS; i++) {
-            led_buffer[i].r = ((led_buffer[i].r * blend_l) >> 8) + ((pixels[i].r * blend_r) >> 8);
-            led_buffer[i].g = ((led_buffer[i].g * blend_l) >> 8) + ((pixels[i].g * blend_r) >> 8);
-            led_buffer[i].b = (led_buffer[i].b * blend_l) / 256 + (pixels[i].b * blend_r) / 256;
-        }
-    }
-
-    led_strip_update_rgb(led_strip, led_buffer, STRIP_NUM_PIXELS);
+    return blend;
 }
 
 static void zmk_rgb_underglow_tick(struct k_work *work) {
