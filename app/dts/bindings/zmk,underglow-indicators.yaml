@@ -1,0 +1,29 @@
+# Copyright (c) 2020, The ZMK Contributors
+# SPDX-License-Identifier: MIT
+
+description: Underglow indicators
+
+compatible: "zmk,underglow-indicators"
+
+properties:
+  bat-lhs:
+    type: array
+    required: true
+  bat-rhs:
+    type: array
+    required: true
+  capslock:
+    type: int
+    required: true
+  numlock:
+    type: int
+    required: true
+  scrolllock:
+    type: int
+    required: true
+  ble-state:
+    type: array
+    required: true
+  usb-state:
+    type: int
+    required: true

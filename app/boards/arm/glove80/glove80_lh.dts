@@ -17,6 +17,7 @@
 		zmk,underglow = &led_strip;
         zmk,backlight = &back_led_backlight;
 		zmk,battery   = &vbatt;
+		zmk,underglow-indicators = &underglow_indicators;
 	};
 
 	back_led_backlight: pwmleds {
@@ -46,6 +47,38 @@
 	vbatt-vddh {
 		compatible = "zmk,battery-nrf-vddh";
 		label = "BATTERY-VDDH";
+	};
+
+/*
+  MoErgo 18 LEDs (prototype)
+  f1 f2 f3 f4 f5 f6
+  14 11  8  5  2
+  15 12  9  6  3  0
+  16 13 10  7  4  1
+
+  17
+
+  MoErgo 40 LEDs
+
+  34 28 22 16 10
+  35 29 23 17 11 6
+  36 30 24 18 12 7
+  37 31 25 19 13 8
+  38 32 26 20 14 9
+  39 33 27 21 15
+                0 1 2
+                3 4 5
+*/
+
+	underglow_indicators: underglow-indicators {
+		compatible = "zmk,underglow-indicators";
+		bat-lhs = <15 12 9 6 3 0>;
+		bat-rhs = <16 13 10 7 4 1>;
+		capslock = <8>;
+		numlock = <5>;
+		scrolllock = <2>;
+		ble-state = <14 11>;
+		usb-state = <17>;
 	};
 };
 
