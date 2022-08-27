@@ -279,14 +279,17 @@ static int zmk_led_generate_status() {
     if (led_flags & ZMK_LED_SCROLLLOCK_BIT)
         status_pixels[DT_PROP(UNDERGLOW_INDICATORS, scrolllock)] = green;
 
-    int ble_profile_index = zmk_ble_active_profile_index();
-
-    if (ble_profile_index < DT_PROP_LEN(UNDERGLOW_INDICATORS, ble_state)) {
-        int ble_pixel = underglow_ble_state[ble_profile_index];
-        if (zmk_ble_active_profile_is_open())
+    for (uint8_t i = 0; i < DT_PROP_LEN(UNDERGLOW_INDICATORS, ble_state); i++) {
+        int8_t status = zmk_ble_profile_status(i);
+        int ble_pixel = underglow_ble_state[i];
+        if (status == 2) { // connected
             status_pixels[ble_pixel] = yellow;
-        else if (zmk_ble_active_profile_is_connected())
+        } else if (status == 1) { // paired
             status_pixels[ble_pixel] = green;
+        } else if (status == 0) { // unused
+            status_pixels[ble_pixel] = red;
+        }
+    }
     }
 #endif
 
