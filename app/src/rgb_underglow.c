@@ -269,16 +269,27 @@ static int zmk_led_generate_status() {
         b : 0
     };
     const struct led_rgb green = {r : 0, g : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX, b : 0};
+    const struct led_rgb purple = {
+        r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
+        g : 0,
+        b : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX
+    };
+
+    zmk_led_battery_level(zmk_battery_state_of_charge(), underglow_bat_lhs,
+                          DT_PROP_LEN(UNDERGLOW_INDICATORS, bat_lhs));
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    zmk_led_battery_level(zmk_battery_state_of_peripheral_charge(), underglow_bat_rhs,
+                          DT_PROP_LEN(UNDERGLOW_INDICATORS, bat_rhs));
+
     zmk_leds_flags_t led_flags = zmk_leds_get_current_flags();
 
     if (led_flags & ZMK_LED_CAPSLOCK_BIT)
-        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, capslock)] = green;
+        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, capslock)] = red;
     if (led_flags & ZMK_LED_NUMLOCK_BIT)
-        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, numlock)] = green;
+        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, numlock)] = red;
     if (led_flags & ZMK_LED_SCROLLLOCK_BIT)
-        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, scrolllock)] = green;
+        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, scrolllock)] = red;
 
     for (uint8_t i = 0; i < DT_PROP_LEN(UNDERGLOW_INDICATORS, ble_state); i++) {
         int8_t status = zmk_ble_profile_status(i);
@@ -301,16 +312,8 @@ static int zmk_led_generate_status() {
     int usb_state = zmk_usb_get_conn_state();
     if (usb_state != ZMK_USB_CONN_NONE) {
         status_pixels[DT_PROP(UNDERGLOW_INDICATORS, usb_state)] =
-            usb_state == ZMK_USB_CONN_HID ? yellow : green;
+            usb_state == ZMK_USB_CONN_HID ? yellow : red;
     }
-
-    zmk_led_battery_level(zmk_battery_state_of_charge(), underglow_bat_lhs,
-                          DT_PROP_LEN(UNDERGLOW_INDICATORS, bat_lhs));
-
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-    zmk_led_battery_level(zmk_battery_state_of_peripheral_charge(), underglow_bat_rhs,
-                          DT_PROP_LEN(UNDERGLOW_INDICATORS, bat_rhs));
-#endif
 
     int16_t blend = 256;
     if (state.status_animation_step < (500 / 25)) {
