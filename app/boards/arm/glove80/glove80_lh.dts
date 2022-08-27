@@ -72,6 +72,7 @@
 
 	underglow_indicators: underglow-indicators {
 		compatible = "zmk,underglow-indicators";
+		layer-state = <15 12 9 6 3 0>;
 		bat-lhs = <15 12 9 6 3 0>;
 		bat-rhs = <16 13 10 7 4 1>;
 		capslock = <8>;

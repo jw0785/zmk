@@ -226,6 +226,7 @@ static void zmk_led_write_pixels() {
 static int zmk_led_generate_status() { return 0; }
 #else
 
+const uint8_t underglow_layer_state[] = DT_PROP(UNDERGLOW_INDICATORS, layer_state);
 const uint8_t underglow_ble_state[] = DT_PROP(UNDERGLOW_INDICATORS, ble_state);
 const uint8_t underglow_bat_lhs[] = DT_PROP(UNDERGLOW_INDICATORS, bat_lhs);
 const uint8_t underglow_bat_rhs[] = DT_PROP(UNDERGLOW_INDICATORS, bat_rhs);
@@ -290,6 +291,10 @@ static int zmk_led_generate_status() {
             status_pixels[ble_pixel] = red;
         }
     }
+
+    for (uint8_t i = 0; i < DT_PROP_LEN(UNDERGLOW_INDICATORS, layer_state); i++) {
+        if (zmk_keymap_layer_active(i))
+            status_pixels[underglow_layer_state[i]] = purple;
     }
 #endif
 
