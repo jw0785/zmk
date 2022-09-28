@@ -267,9 +267,9 @@ const struct led_rgb red = HEXRGB(0xff, 0x00, 0x00);
 const struct led_rgb yellow = HEXRGB(0xff, 0xff, 0x00);
 const struct led_rgb green = HEXRGB(0x00, 0xff, 0x00);
 const struct led_rgb dull_green = HEXRGB(0x00, 0xff, 0x48);
-const struct led_rgb purple = HEXRGB(0xff, 0x00, 0xff);
+const struct led_rgb magenta = HEXRGB(0xff, 0x00, 0xff);
 const struct led_rgb white = HEXRGB(0xff, 0xff, 0xff);
-const struct led_rgb layer_colour = HEXRGB(0x6b, 0x1f, 0xce);
+const struct led_rgb lilac = HEXRGB(0x6b, 0x1f, 0xce);
 
 void zmk_led_battery_level(int bat_level, const uint8_t *addresses, int addresses_len) {
     static struct led_rgb bat_colour = red;
@@ -314,7 +314,7 @@ static int zmk_led_generate_status() {
     // LAYER STATUS
     for (uint8_t i = 0; i < DT_PROP_LEN(UNDERGLOW_INDICATORS, layer_state); i++) {
         if (zmk_keymap_layer_active(i))
-            status_pixels[underglow_layer_state[i]] = layer_colour;
+            status_pixels[underglow_layer_state[i]] = magenta;
     }
 
     enum zmk_endpoint active_endpoint = zmk_endpoints_selected();
@@ -335,7 +335,7 @@ static int zmk_led_generate_status() {
         } else if (status == 1) { // paired
             status_pixels[ble_pixel] = red;
         } else if (status == 0) { // unused
-            status_pixels[ble_pixel] = purple;
+            status_pixels[ble_pixel] = lilac;
         }
     }
 
@@ -348,7 +348,7 @@ static int zmk_led_generate_status() {
     } else if (usb_state == ZMK_USB_CONN_POWERED) { // powered
         status_pixels[DT_PROP(UNDERGLOW_INDICATORS, usb_state)] = red;
     } else if (usb_state == ZMK_USB_CONN_NONE) { // disconnected
-        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, usb_state)] = purple;
+        status_pixels[DT_PROP(UNDERGLOW_INDICATORS, usb_state)] = lilac;
     }
 #endif
 
