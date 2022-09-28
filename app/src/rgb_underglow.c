@@ -257,15 +257,21 @@ const uint8_t underglow_ble_state[] = DT_PROP(UNDERGLOW_INDICATORS, ble_state);
 const uint8_t underglow_bat_lhs[] = DT_PROP(UNDERGLOW_INDICATORS, bat_lhs);
 const uint8_t underglow_bat_rhs[] = DT_PROP(UNDERGLOW_INDICATORS, bat_rhs);
 
-void zmk_led_battery_level(int bat_level, const uint8_t *addresses, int addresses_len) {
-    const struct led_rgb red = {r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX, g : 0, b : 0};
-    const struct led_rgb yellow = {
-        r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        g : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        b : 0
-    };
-    const struct led_rgb green = {r : 0, g : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX, b : 0};
+#define HEXRGB(R, G, B)                                                                            \
+    ((struct led_rgb){                                                                             \
+        r : (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX * (R)) / 0xff,                                       \
+        g : (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX * (G)) / 0xff,                                       \
+        b : (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX * (B)) / 0xff                                        \
+    })
+const struct led_rgb red = HEXRGB(0xff, 0x00, 0x00);
+const struct led_rgb yellow = HEXRGB(0xff, 0xff, 0x00);
+const struct led_rgb green = HEXRGB(0x00, 0xff, 0x00);
+const struct led_rgb dull_green = HEXRGB(0x00, 0xff, 0x48);
+const struct led_rgb purple = HEXRGB(0xff, 0x00, 0xff);
+const struct led_rgb white = HEXRGB(0xff, 0xff, 0xff);
+const struct led_rgb layer_colour = HEXRGB(0x6b, 0x1f, 0xce);
 
+void zmk_led_battery_level(int bat_level, const uint8_t *addresses, int addresses_len) {
     static struct led_rgb bat_colour = red;
 
     if (bat_level > 20)
@@ -288,29 +294,6 @@ static int zmk_led_generate_status() {
         status_pixels[i] = (struct led_rgb){r : 0, g : 0, b : 0};
     }
 
-    const struct led_rgb red = {r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX, g : 0, b : 0};
-    const struct led_rgb yellow = {
-        r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        g : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        b : 0
-    };
-    const struct led_rgb green = {r : 0, g : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX, b : 0};
-    const struct led_rgb dull_green = {
-        r : 0,
-        g : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        b : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX / 2
-    };
-    const struct led_rgb purple = {
-        r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        g : 0,
-        b : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX
-    };
-    const struct led_rgb white = {
-        r : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        g : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX,
-        b : CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX
-    };
-
     zmk_led_battery_level(zmk_battery_state_of_charge(), underglow_bat_lhs,
                           DT_PROP_LEN(UNDERGLOW_INDICATORS, bat_lhs));
 
@@ -331,7 +314,7 @@ static int zmk_led_generate_status() {
     // LAYER STATUS
     for (uint8_t i = 0; i < DT_PROP_LEN(UNDERGLOW_INDICATORS, layer_state); i++) {
         if (zmk_keymap_layer_active(i))
-            status_pixels[underglow_layer_state[i]] = purple;
+            status_pixels[underglow_layer_state[i]] = layer_colour;
     }
 
     enum zmk_endpoint active_endpoint = zmk_endpoints_selected();
