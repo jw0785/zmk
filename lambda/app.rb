@@ -1,54 +1,38 @@
 # frozen_string_literal: true
 
-require 'rack'
-require 'serverless_rack'
-
-require './web_app'
+require 'stringio'
 require './compiler'
 
-$app = Rack::Builder.new do
-  run WebApp
-end.to_app
-
 module LambdaFunction
-  # Handle a API Gateway/ALB-structured HTTP request using the Sinatra app
-  class HttpHandler
-    def self.process(event:, context:)
-      handle_request(app: $app, event: event, context: context)
-    end
-  end
-
-  # Handle a non-HTTP proxied request, returning either the compiled result or
-  # an error as JSON.
-  class DirectHandler
+  # Handle a non-HTTP compile request, returning a JSON body of either the
+  # compiled result or an error.
+  class Handler
     REVISION = ENV.fetch('REVISION', 'unknown')
 
     def self.process(event:, context:)
       return { type: 'keep_alive' } if event.has_key?('keep_alive')
 
-      keymap_data = event.fetch('keymap') do
-        return error(status: 400, message: 'Missing required argument: keymap')
-      end
-
-      keymap_data =
-        begin
-          Base64.strict_decode64(keymap_data)
-        rescue ArgumentError
-          return error(status: 400, message: 'Invalid Base64 in keymap input')
+      parse_base64_param = ->(param, required: true) do
+        if event.include?(param)
+          Base64.strict_decode64(event.fetch(param))
+        elsif required
+          return error(status: 400, message: "Missing required argument: #{param}")
         end
-
-      if event.has_key?('kconfig')
-        kconfig_data =
-          begin
-            Base64.strict_decode64(event['kconfig'])
-          rescue ArgumentError
-            return error(status: 400, message: 'Invalid Base64 in kconfig input')
-          end
+      rescue ArgumentError
+        return error(status: 400, message: "Invalid Base64 in #{param} input")
       end
+
+      keymap_data  = parse_base64_param.('keymap')
+      kconfig_data = parse_base64_param.('kconfig', required: false)
+
+      # Including kconfig settings that affect the RHS require building both
+      # firmware images, doubling compile time. Clients should omit rhs_kconfig
+      # where possible.
+      rhs_kconfig_data = parse_base64_param.('rhs_kconfig', required: false)
 
       result, log =
         begin
-          Compiler.new.compile(keymap_data, kconfig_data)
+          Compiler.new.compile(keymap_data, kconfig_data, rhs_kconfig_data)
         rescue Compiler::CompileError => e
           return error(status: e.status, message: e.message, detail: e.log)
         end
