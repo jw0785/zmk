@@ -12,13 +12,13 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <dt-bindings/zmk/modifiers.h>
 
 static struct zmk_hid_keyboard_report keyboard_report = {
-    .report_id = HID_REPORT_ID_KEYBOARD, .body = {.modifiers = 0, ._reserved = 0, .keys = {0}}};
+		.report_id = 1, .body = {.modifiers = 0, .extra_keys = {0}, .keys = {0}}};
 
 static struct zmk_hid_consumer_report consumer_report = {.report_id = HID_REPORT_ID_CONSUMER,
                                                          .body = {.keys = {0}}};
 #if IS_ENABLED(CONFIG_ZMK_USB_BOOT)
 
-static zmk_hid_boot_report_t boot_report = {.modifiers = 0, ._reserved = 0, .keys = {0}};
+static zmk_hid_boot_report_t boot_report = {.modifiers = 0, .keys = {0}};
 
 static uint8_t keys_held = 0;
 
@@ -30,7 +30,7 @@ static int explicit_modifier_counts[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static zmk_mod_flags_t explicit_modifiers = 0;
 static zmk_mod_flags_t implicit_modifiers = 0;
 static zmk_mod_flags_t masked_modifiers = 0;
-
+static int apple_fn_count = 0;
 #define SET_MODIFIERS(mods)                                                                        \
     {                                                                                              \
         keyboard_report.body.modifiers = (mods & ~masked_modifiers) | implicit_modifiers;          \
@@ -327,6 +327,40 @@ bool zmk_hid_consumer_is_pressed(zmk_key_t key) {
     return false;
 }
 
+int zmk_hid_extra_set_state(uint32_t usage, bool pressed) {
+    bool current;
+    switch (ZMK_HID_USAGE_PAGE(usage)) {
+    case HID_USAGE_AV_TOP_CASE:
+        switch (ZMK_HID_USAGE_ID(usage)) {
+        case HID_USAGE_AV_TOP_CASE_KEYBOARD_FN:
+            apple_fn_count += pressed ? 1 : -1;
+            current = keyboard_report.body.extra_keys.apple_keyboard_fn;
+            keyboard_report.body.extra_keys.apple_keyboard_fn = apple_fn_count != 0;
+            return current == keyboard_report.body.extra_keys.apple_keyboard_fn ? 0 : 1;
+        }
+        break;
+    }
+    return -EINVAL;
+}
+
+int zmk_hid_extra_press(uint32_t usage) { return zmk_hid_extra_set_state(usage, true); }
+
+int zmk_hid_extra_release(uint32_t usage) { return zmk_hid_extra_set_state(usage, false); }
+
+void zmk_hid_extra_clear() { apple_fn_count = 0; }
+
+bool zmk_hid_extra_is_pressed(uint32_t usage) {
+    switch (ZMK_HID_USAGE_PAGE(usage)) {
+    case HID_USAGE_AV_TOP_CASE:
+        switch (ZMK_HID_USAGE_ID(usage)) {
+        case HID_USAGE_AV_TOP_CASE_KEYBOARD_FN:
+            return keyboard_report.body.extra_keys.apple_keyboard_fn;
+        }
+        break;
+    }
+    return false;
+}
+
 int zmk_hid_press(uint32_t usage) {
     switch (ZMK_HID_USAGE_PAGE(usage)) {
     case HID_USAGE_KEY:
@@ -334,7 +368,7 @@ int zmk_hid_press(uint32_t usage) {
     case HID_USAGE_CONSUMER:
         return zmk_hid_consumer_press(ZMK_HID_USAGE_ID(usage));
     }
-    return -EINVAL;
+    return zmk_hid_extra_press(usage);
 }
 
 int zmk_hid_release(uint32_t usage) {
@@ -344,7 +378,7 @@ int zmk_hid_release(uint32_t usage) {
     case HID_USAGE_CONSUMER:
         return zmk_hid_consumer_release(ZMK_HID_USAGE_ID(usage));
     }
-    return -EINVAL;
+    return zmk_hid_extra_release(usage);
 }
 
 bool zmk_hid_is_pressed(uint32_t usage) {
@@ -354,7 +388,7 @@ bool zmk_hid_is_pressed(uint32_t usage) {
     case HID_USAGE_CONSUMER:
         return zmk_hid_consumer_is_pressed(ZMK_HID_USAGE_ID(usage));
     }
-    return false;
+    return zmk_hid_extra_is_pressed(usage);
 }
 
 struct zmk_hid_keyboard_report *zmk_hid_get_keyboard_report() {
