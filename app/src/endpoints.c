@@ -132,6 +132,7 @@ int zmk_endpoints_send_report(uint16_t usage_page) {
 
     LOG_DBG("usage page 0x%02X", usage_page);
     switch (usage_page) {
+	case HID_USAGE_AV_TOP_CASE:
     case HID_USAGE_KEY:
         return send_keyboard_report();
     case HID_USAGE_CONSUMER:
@@ -226,7 +227,8 @@ static enum zmk_endpoint get_selected_endpoint() {
 static void disconnect_current_endpoint() {
     zmk_hid_keyboard_clear();
     zmk_hid_consumer_clear();
-
+	zmk_hid_extra_clear();
+	
     zmk_endpoints_send_report(HID_USAGE_KEY);
     zmk_endpoints_send_report(HID_USAGE_CONSUMER);
 }
