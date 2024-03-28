@@ -282,11 +282,11 @@ const uint8_t underglow_bat_rhs[] = DT_PROP(UNDERGLOW_INDICATORS, bat_rhs);
         g : (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX * (G)) / 0xff,                                       \
         b : (CONFIG_ZMK_RGB_UNDERGLOW_BRT_MAX * (B)) / 0xff                                        \
     })
-const struct led_rgb red = HEXRGB(0xff, 0x00, 0x00);
-const struct led_rgb yellow = HEXRGB(0xff, 0xff, 0x00);
-const struct led_rgb green = HEXRGB(0x00, 0xff, 0x00);
-const struct led_rgb dull_green = HEXRGB(0x00, 0xff, 0x68);
-const struct led_rgb magenta = HEXRGB(0xff, 0x00, 0xff);
+const struct led_rgb red = HEXRGB(0xff, 0x19, 0x19);
+const struct led_rgb yellow = HEXRGB(0xff, 0xff, 0x19);
+const struct led_rgb green = HEXRGB(0xf9, 0x91, 0x18);
+const struct led_rgb dull_green = HEXRGB(0x19, 0xff, 0x77);
+const struct led_rgb magenta = HEXRGB(0xff, 0x19, 0xff);
 const struct led_rgb white = HEXRGB(0xff, 0xff, 0xff);
 const struct led_rgb lilac = HEXRGB(0x6b, 0x1f, 0xce);
 
