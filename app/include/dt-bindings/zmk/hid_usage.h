@@ -2559,6 +2559,9 @@
 #define HID_USAGE_CAMERA_CAMERA_AUTO_FOCUS (0x20) // OSC
 #define HID_USAGE_CAMERA_CAMERA_SHUTTER (0x21)    // OSC
 
+/* Page 0xFF: Apple Vendor Top Case */
+#define HID_USAGE_AV_TOP_CASE_KEYBOARD_FN (0x03) // Apple fn/globe
+
 /* Page 0xF1D0: FIDO Alliance */
 #define HID_USAGE_FIDO_UNDEFINED (0x00)
 #define HID_USAGE_FIDO_U2F_AUTHENTICATOR_DEVICE (0x01) // CA

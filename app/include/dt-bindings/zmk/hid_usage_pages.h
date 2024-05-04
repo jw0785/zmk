@@ -49,4 +49,5 @@
 #define HID_USAGE_CAMERA (0x90)         // Camera Control
 #define HID_USAGE_ARCADE (0x91)         // Arcade
 #define HID_USAGE_GAMING (0x92)         // Gaming Device
+#define HID_USAGE_AV_TOP_CASE (0xFF)    // Apple Vendor Top Case
 #define HID_USAGE_FIDO (0xF1D0)         // FIDO Alliance

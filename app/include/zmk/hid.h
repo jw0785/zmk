@@ -74,10 +74,15 @@ static const uint8_t zmk_hid_report_desc[] = {
     HID_REPORT_COUNT(0x08),
     HID_INPUT(ZMK_HID_MAIN_VAL_DATA | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
 
-    HID_USAGE_PAGE(HID_USAGE_KEY),
-    HID_REPORT_SIZE(0x08),
+    HID_USAGE_PAGE(HID_USAGE_AV_TOP_CASE),        // AppleVendor Top Case
+    HID_USAGE(HID_USAGE_AV_TOP_CASE_KEYBOARD_FN), // KeyboardFn
+    HID_REPORT_SIZE(0x01),
     HID_REPORT_COUNT(0x01),
-    HID_INPUT(ZMK_HID_MAIN_VAL_CONST | ZMK_HID_MAIN_VAL_VAR | ZMK_HID_MAIN_VAL_ABS),
+    HID_INPUT(0x02), //uncertain!!!
+    /* Reserved 7 bits */
+    HID_REPORT_SIZE(0x07),
+    HID_REPORT_COUNT(0x01),
+    HID_INPUT(0x03),
 
 #if IS_ENABLED(CONFIG_ZMK_HID_INDICATORS)
 
@@ -198,7 +203,12 @@ typedef struct zmk_hid_boot_report zmk_hid_boot_report_t;
 
 struct zmk_hid_keyboard_report_body {
     zmk_mod_flags_t modifiers;
-    uint8_t _reserved;
+    union {
+        uint8_t raw;
+        struct {
+            bool apple_keyboard_fn : 1;
+        } __packed;
+    } extra_keys;
 #if IS_ENABLED(CONFIG_ZMK_HID_REPORT_TYPE_NKRO)
     uint8_t keys[(ZMK_HID_KEYBOARD_NKRO_MAX_USAGE + 1) / 8];
 #elif IS_ENABLED(CONFIG_ZMK_HID_REPORT_TYPE_HKRO)
@@ -273,6 +283,11 @@ int zmk_hid_consumer_press(zmk_key_t key);
 int zmk_hid_consumer_release(zmk_key_t key);
 void zmk_hid_consumer_clear(void);
 bool zmk_hid_consumer_is_pressed(zmk_key_t key);
+
+int zmk_hid_extra_press(uint32_t usage);
+int zmk_hid_extra_release(uint32_t usage);
+void zmk_hid_extra_clear();
+bool zmk_hid_extra_is_pressed(uint32_t usage);
 
 int zmk_hid_press(uint32_t usage);
 int zmk_hid_release(uint32_t usage);

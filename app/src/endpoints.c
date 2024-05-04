@@ -180,6 +180,7 @@ int zmk_endpoints_send_report(uint16_t usage_page) {
 
     LOG_DBG("usage page 0x%02X", usage_page);
     switch (usage_page) {
+    case HID_USAGE_AV_TOP_CASE:
     case HID_USAGE_KEY:
         return send_keyboard_report();
 
@@ -329,6 +330,7 @@ static int zmk_endpoints_init(void) {
 static void disconnect_current_endpoint(void) {
     zmk_hid_keyboard_clear();
     zmk_hid_consumer_clear();
+    zmk_hid_extra_clear();
 #if IS_ENABLED(CONFIG_ZMK_MOUSE)
     zmk_hid_mouse_clear();
 #endif // IS_ENABLED(CONFIG_ZMK_MOUSE)
